@@ -1,13 +1,15 @@
 type ElfInventory = Vec<u32>;
 
 pub fn parse_input(input: &str) -> Vec<ElfInventory> {
-    let mut elfs = Vec::new();
-    for elf in input.split("\n\n") {
-        let vec = elf.lines().map(|l| l.parse::<u32>().unwrap()).collect();
-        elfs.push(vec);
-    }
-
-    elfs
+    input
+        .split("\n\n")
+        .map(|inv_data| {
+            inv_data
+                .lines()
+                .map(|l| l.parse::<u32>().unwrap())
+                .collect()
+        })
+        .collect()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
