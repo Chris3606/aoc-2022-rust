@@ -125,6 +125,8 @@ _Total timing_ is computed from individual solution _timings_ and excludes as mu
 cargo test
 ```
 
+To run tests for a specific day, append `--bin <day>`, e.g. `cargo test --bin 01`. You can further scope it down to a specific part, e.g. `cargo test --bin 01 part_one`.
+
 ### Format code
 
 ```sh
@@ -168,6 +170,8 @@ Go to the _Secrets_ tab in your repository settings and create the following sec
 -   `AOC_USER_ID`: Go to [this page](https://adventofcode.com/settings) and copy your user id. It's the number behind the `#` symbol in the first name option. Example: `3031`
 -   `AOC_YEAR`: the year you want to track. Example: `2021`
 -   `AOC_SESSION`: an active session[^2] for the advent of code website. To get this, press F12 anywhere on the Advent of Code website to open your browser developer tools. Look in your Cookies under the Application or Storage tab, and copy out the `session` cookie.
+
+✨ You can now run this action manually via the _Run workflow_ button on the workflow page. If you want the workflow to run automatically, uncomment the `schedule` section in the `readme-stars.yml` workflow file or add a `push` trigger.
 
 ### Use VS Code to debug your code
 
