@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use advent_of_code::helpers::ParseError;
 
+/// Represents a number range with a min and a max value.
 struct NumRange {
     min: u32,
     max: u32,
@@ -10,6 +11,7 @@ struct NumRange {
 impl FromStr for NumRange {
     type Err = ParseError;
 
+    /// Parses a number range in the format {min}-{max}
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut num_it = s.split('-');
         let min = num_it
@@ -28,15 +30,18 @@ impl FromStr for NumRange {
 }
 
 impl NumRange {
+    /// Whether or not the given range overlaps with the current one.
     pub fn overlaps(&self, other: &NumRange) -> bool {
         self.min <= other.max && other.min <= self.max
     }
 
+    /// Whether or not the given range is completely contained within the current one.
     pub fn contains(&self, other: &NumRange) -> bool {
         self.min <= other.min && other.max <= self.max
     }
 }
 
+/// Represents a pair or ranges, one for each elf, as per the input.
 struct RangePair {
     elf1_range: NumRange,
     elf2_range: NumRange,
@@ -45,6 +50,7 @@ struct RangePair {
 impl FromStr for RangePair {
     type Err = ParseError;
 
+    /// Parses a RangePair in the form {NumRange from_str format},{NumRange from_str format}
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut num_it = s.split(',');
         let elf1_range = num_it
