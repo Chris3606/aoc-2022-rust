@@ -26,23 +26,6 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in day x",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--bin=02",
-                ],
-                "filter": {
-                    "name": "02",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
             "name": "Debug executable 'advent_of_code'",
             "cargo": {
                 "args": [
@@ -58,6 +41,24 @@
             "args": [
                 "1"
             ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'dayX'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=05",
+                ],
+                "filter": {
+                    "name": "05",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
             "cwd": "${workspaceFolder}"
         },
         {
