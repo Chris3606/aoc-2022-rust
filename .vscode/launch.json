@@ -51,10 +51,10 @@
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=05",
+                    "--bin=07",
                 ],
                 "filter": {
-                    "name": "05",
+                    "name": "07",
                     "kind": "bin"
                 }
             },
