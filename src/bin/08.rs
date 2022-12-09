@@ -8,18 +8,18 @@ pub fn part_one(input: &str) -> Option<usize> {
     // Find visible cells from the north and south ends.
     for x in 0..treemap.width() {
         let start_pos = helpers::Vector2i { x: x as i64, y: 0 };
-        let mut max_val = *treemap.get(&start_pos);
-        *visibility_grid.get_mut(&start_pos) = true;
+        let mut max_val = treemap[start_pos];
+        visibility_grid[start_pos] = true;
         for y in 1..treemap.height() {
             let pos = helpers::Vector2i {
                 x: x as i64,
                 y: y as i64,
             };
 
-            let val = *treemap.get(&pos);
+            let val = treemap[pos];
             if val > max_val {
                 max_val = val;
-                *visibility_grid.get_mut(&pos) = true;
+                visibility_grid[pos] = true;
             }
         }
 
@@ -27,18 +27,18 @@ pub fn part_one(input: &str) -> Option<usize> {
             x: x as i64,
             y: treemap.height() as i64 - 1,
         };
-        let mut max_val = *treemap.get(&start_pos);
-        *visibility_grid.get_mut(&start_pos) = true;
+        let mut max_val = treemap[start_pos];
+        visibility_grid[start_pos] = true;
         for y in (0..treemap.height()).rev() {
             let pos = helpers::Vector2i {
                 x: x as i64,
                 y: y as i64,
             };
 
-            let val = *treemap.get(&pos);
+            let val = treemap[pos];
             if val > max_val {
                 max_val = val;
-                *visibility_grid.get_mut(&pos) = true;
+                visibility_grid[pos] = true;
             }
         }
     }
@@ -46,18 +46,18 @@ pub fn part_one(input: &str) -> Option<usize> {
     // Find visible cells from the west and east ends
     for y in 0..treemap.height() {
         let start_pos = helpers::Vector2i { x: 0, y: y as i64 };
-        let mut max_val = *treemap.get(&start_pos);
-        *visibility_grid.get_mut(&start_pos) = true;
+        let mut max_val = treemap[start_pos];
+        visibility_grid[start_pos] = true;
         for x in 1..treemap.width() {
             let pos = helpers::Vector2i {
                 x: x as i64,
                 y: y as i64,
             };
 
-            let val = *treemap.get(&pos);
+            let val = treemap[pos];
             if val > max_val {
                 max_val = val;
-                *visibility_grid.get_mut(&pos) = true;
+                visibility_grid[pos] = true;
             }
         }
 
@@ -65,18 +65,18 @@ pub fn part_one(input: &str) -> Option<usize> {
             x: treemap.width() as i64 - 1,
             y: y as i64,
         };
-        let mut max_val = *treemap.get(&start_pos);
-        *visibility_grid.get_mut(&start_pos) = true;
+        let mut max_val = treemap[start_pos];
+        visibility_grid[start_pos] = true;
         for x in (0..treemap.width()).rev() {
             let pos = helpers::Vector2i {
                 x: x as i64,
                 y: y as i64,
             };
 
-            let val = *treemap.get(&pos);
+            let val = treemap[pos];
             if val > max_val {
                 max_val = val;
-                *visibility_grid.get_mut(&pos) = true;
+                visibility_grid[pos] = true;
             }
         }
     }
@@ -93,7 +93,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     let mut best_scenic_score = 0;
     for i in 0..treemap.num_cells() {
         let pos = Vector2i::new_from_index(i as u64, treemap.width() as u64);
-        let val = *treemap.get(&pos);
+        let val = treemap[pos];
 
         let mut scenic_score = 1;
         for dir in helpers::CARDINAL_DIRS {
@@ -101,7 +101,7 @@ pub fn part_two(input: &str) -> Option<u32> {
             let mut view_dist = 0;
             while treemap.contains(&cur) {
                 view_dist += 1;
-                if *treemap.get(&cur) >= val {
+                if treemap[cur] >= val {
                     break;
                 }
                 cur = cur + &dir;

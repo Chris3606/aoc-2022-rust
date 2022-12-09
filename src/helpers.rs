@@ -3,7 +3,10 @@
  * Example import from this file: `use advent_of_code::helpers::example_fn;`.
  */
 
-use std::{ops, str::FromStr};
+use std::{
+    ops::{self, Index, IndexMut},
+    str::FromStr,
+};
 
 #[derive(Debug)]
 pub enum ParseError {
@@ -113,6 +116,34 @@ pub struct Grid<T> {
     width: usize,
 }
 
+impl<T> Index<usize> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.values[index]
+    }
+}
+
+impl<T> IndexMut<usize> for Grid<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.values[index]
+    }
+}
+
+impl<T> Index<Vector2i> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, pos: Vector2i) -> &Self::Output {
+        &self.values[pos.to_index(self.width)]
+    }
+}
+
+impl<T> IndexMut<Vector2i> for Grid<T> {
+    fn index_mut(&mut self, pos: Vector2i) -> &mut Self::Output {
+        &mut self.values[pos.to_index(self.width)]
+    }
+}
+
 impl<T> Grid<T> {
     /// Creates a new grid based on the values in the given vector, and the width specified.
     ///
@@ -124,36 +155,17 @@ impl<T> Grid<T> {
         Self { values, width }
     }
 
-    /// Gets a reference to the value at the given position.
-    pub fn get(&self, pos: &Vector2i) -> &T {
-        &self.values[pos.to_index(self.width)]
-    }
-
-    /// Gets a mutable reference to the value at the given position.
-    pub fn get_mut(&mut self, pos: &Vector2i) -> &mut T {
-        &mut self.values[pos.to_index(self.width)]
-    }
-
-    /// Gets a reference to the value at the given index.
-    ///
-    /// The index is assumed to have been encoded by `Vector2i::to_index` (or identical math),
-    /// with a width equal to the width of the grid.
-    pub fn get_index(&self, index: usize) -> &T {
-        &self.values[index]
-    }
-
-    pub fn get_index_mut(&mut self, index: usize) -> &mut T {
-        &mut self.values[index]
-    }
-
+    /// Returns the width of the grid.
     pub fn width(&self) -> usize {
         self.width
     }
 
+    /// Returns the height of the grid.
     pub fn height(&self) -> usize {
         self.values.len() / self.width
     }
 
+    /// Returns the total number of cells in the grid (will always be width() * height())
     pub fn num_cells(&self) -> usize {
         self.values.len()
     }
@@ -170,6 +182,7 @@ impl<T> Grid<T> {
         self.values.into_iter()
     }
 
+    /// Returns whether or not the given position is contained within this grid.
     pub fn contains(&self, pos: &Vector2i) -> bool {
         pos.x >= 0
             && pos.y >= 0
@@ -182,6 +195,7 @@ impl<T> Grid<T>
 where
     T: std::clone::Clone,
 {
+    /// Creates a new grid of the given size, with every cell initialized to the given default value.
     pub fn new_empty(width: usize, height: usize, default_value: T) -> Self {
         Self {
             values: vec![default_value; width * height],
