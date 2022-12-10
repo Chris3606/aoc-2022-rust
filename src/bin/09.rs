@@ -8,28 +8,6 @@ struct Instruction {
     amount: u32,
 }
 
-pub fn debug_print(knots: &Vec<Vector2i>) {
-    for y in -4..=0 {
-        for x in 0..6 {
-            let cur_pos = Vector2i { x, y };
-            let mut ch = String::from(".");
-            if cur_pos == knots[0] {
-                ch = String::from("H")
-            } else {
-                for (idx, i) in knots.iter().enumerate().skip(1) {
-                    if cur_pos == *i {
-                        ch = idx.to_string();
-                        break;
-                    }
-                }
-            }
-
-            print!("{}", ch);
-        }
-        println!("");
-    }
-}
-
 impl FromStr for Instruction {
     type Err = ParseError;
 
