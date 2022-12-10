@@ -79,48 +79,53 @@ fn get_knot_follow_pos(leader_knot: &Vector2i, trailing_knot: &Vector2i) -> Vect
     *trailing_knot + &delta
 }
 
-pub fn part_one(input: &str) -> Option<usize> {
-    let instructions = parse_input(input);
-
-    let mut hpos = Vector2i { x: 0, y: 0 };
-    let mut tpos = Vector2i { x: 0, y: 0 };
-    let mut tail_visited = HashSet::new();
-    tail_visited.insert(tpos);
-
-    for instr in &instructions {
-        for _ in 0..instr.amount {
-            hpos = hpos + &instr.direction;
-            tpos = get_knot_follow_pos(&hpos, &tpos);
-            tail_visited.insert(tpos);
-        }
-    }
-
-    Some(tail_visited.len())
-}
-
-pub fn part_two(input: &str) -> Option<usize> {
-    let instructions = parse_input(input);
-
+/// Simulates a rope with the given number of knots (including the "head" and "tail").
+///
+fn simulate_rope<'a>(num_knots: u32, instructions: impl Iterator<Item = &'a Instruction>) -> usize {
+    // Keep track of all rope positions.  We'll assume they all start at (0, 0); the actual positions
+    // don't matter (only the relative positions of the knots to each other does) since all we care
+    // about is the number of positions the tail visits.
+    //
+    // 0 will be the head; knots.len() - 1 will be the tail.
     let mut knots = Vec::new();
-    for _ in 0..10 {
+    for _ in 0..num_knots {
         knots.push(Vector2i { x: 0, y: 0 });
     }
 
+    // Track how many positions the tail visits
     let mut tail_visited = HashSet::new();
     tail_visited.insert(knots[knots.len() - 1]);
 
-    for instr in &instructions {
+    for instr in instructions {
         for _ in 0..instr.amount {
+            // Advance the head.
             knots[0] = knots[0] + &instr.direction;
+
+            // Advance every other rope according to the one ahead of it
             for idx in 1..knots.len() {
                 knots[idx] = get_knot_follow_pos(&knots[idx - 1], &knots[idx]);
             }
 
+            // Ensure we mark the position the tail is now at appropriately
             tail_visited.insert(knots[knots.len() - 1]);
         }
     }
 
-    Some(tail_visited.len())
+    tail_visited.len()
+}
+
+pub fn part_one(input: &str) -> Option<usize> {
+    let instructions = parse_input(input);
+    let num_positions = simulate_rope(2, instructions.iter());
+
+    Some(num_positions)
+}
+
+pub fn part_two(input: &str) -> Option<usize> {
+    let instructions = parse_input(input);
+    let num_positions = simulate_rope(10, instructions.iter());
+
+    Some(num_positions)
 }
 
 fn main() {
