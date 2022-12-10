@@ -4,6 +4,7 @@
  */
 
 use std::{
+    fmt::Display,
     ops::{self, Index, IndexMut},
     str::FromStr,
 };
@@ -205,6 +206,26 @@ where
             values: vec![default_value; width * height],
             width,
         }
+    }
+}
+
+impl<T> Display for Grid<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for y in 0..self.height() {
+            for x in 0..self.width() {
+                let pos = Vector2i {
+                    x: x as i64,
+                    y: y as i64,
+                };
+                write!(f, "{}", self[pos])?;
+            }
+            writeln!(f)?;
+        }
+
+        Ok(())
     }
 }
 

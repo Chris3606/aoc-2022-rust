@@ -124,13 +124,28 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(signal_strength)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(input: &str) -> Option<String> {
     let instructions: Vec<Instruction> = input.lines().map(|l| l.parse().unwrap()).collect();
     let mut cpu = CPU::new(instructions.iter());
+    let mut grid = Grid::new_empty(40, 6, '.');
 
-    let mut grid = Grid::new_empty(40, 6, ' ');
+    let mut pixel_idx = 0;
+    while !cpu.finished_program {
+        // Tick CPU; the value of x during that tick is the horizontal position of the sprite
+        let hpos = cpu.tick();
 
-    None
+        // Pixel within the row we're drawing.
+        let pixel_col = pixel_idx % grid.width();
+        grid[pixel_idx] = if ((hpos - 1)..=(hpos + 1)).contains(&(pixel_col as i32)) {
+            '#'
+        } else {
+            '.'
+        };
+
+        pixel_idx = (pixel_idx + 1) % grid.num_cells();
+    }
+
+    Some(format!("{}", grid))
 }
 
 fn main() {
@@ -151,7 +166,15 @@ mod tests {
 
     #[test]
     fn test_part_two() {
+        let str = "##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....
+";
+
         let input = advent_of_code::read_file("examples", 10);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(String::from(str)));
     }
 }
