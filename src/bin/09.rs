@@ -1,8 +1,6 @@
 use std::{collections::HashSet, str::FromStr};
 
-use advent_of_code::helpers::{
-    chebyshev_distance, manhattan_distance, ParseError, Vector2i, DOWN, LEFT, RIGHT, UP,
-};
+use advent_of_code::helpers::{manhattan_distance, ParseError, Vector2i, DOWN, LEFT, RIGHT, UP};
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 struct Instruction {
@@ -10,22 +8,22 @@ struct Instruction {
     amount: u32,
 }
 
-pub fn debug_print(hpos: &Vector2i, tpos: &Vector2i, tail_visited: &HashSet<Vector2i>) {
-    let origin = Vector2i { x: 0, y: 0 };
+pub fn debug_print(knots: &Vec<Vector2i>) {
     for y in -4..=0 {
         for x in 0..6 {
             let cur_pos = Vector2i { x, y };
-            let ch = if *hpos == cur_pos {
-                'H'
-            } else if *tpos == cur_pos {
-                'T'
-            } else if cur_pos == origin {
-                's'
-            } else if tail_visited.contains(&cur_pos) {
-                '#'
+            let mut ch = String::from(".");
+            if cur_pos == knots[0] {
+                ch = String::from("H")
             } else {
-                '.'
-            };
+                for (idx, i) in knots.iter().enumerate().skip(1) {
+                    if cur_pos == *i {
+                        ch = idx.to_string();
+                        break;
+                    }
+                }
+            }
+
             print!("{}", ch);
         }
         println!("");
@@ -73,11 +71,11 @@ fn get_knot_follow_pos(leader_knot: &Vector2i, trailing_knot: &Vector2i) -> Vect
         y: dy.abs(),
     };
 
-    match manhattan_distance(&tpos, &hpos) {
-        3 => {
+    match manhattan_distance(&trailing_knot, &leader_knot) {
+        3.. => {
             // We have to have to be on different x and y lines.  So we're moving diagonal.
-            delta.x = if delta.x == 2 { 1 } else { delta.x };
-            delta.y = if delta.y == 2 { 1 } else { delta.y };
+            delta.x = if delta.x >= 2 { 1 } else { delta.x };
+            delta.y = if delta.y >= 2 { 1 } else { delta.y };
         }
         2 => {
             // We are either adjacent (1 each axis), or two away on 1.  So we'll just move
@@ -89,7 +87,6 @@ fn get_knot_follow_pos(leader_knot: &Vector2i, trailing_knot: &Vector2i) -> Vect
             // We're adjacent, so there's nothing to do
             delta = Vector2i { x: 0, y: 0 };
         }
-        _ => unreachable!(),
     }
 
     // We've figured out the magnitude of the move; now ensure we move the right way by
@@ -115,42 +112,7 @@ pub fn part_one(input: &str) -> Option<usize> {
     for instr in &instructions {
         for _ in 0..instr.amount {
             hpos = hpos + &instr.direction;
-            let dx = hpos.x - tpos.x;
-            let dy = hpos.y - tpos.y;
-
-            let mut delta = Vector2i {
-                x: dx.abs(),
-                y: dy.abs(),
-            };
-            match manhattan_distance(&tpos, &hpos) {
-                3 => {
-                    // We have to have to be on different x and y lines.  So we're moving diagonal.
-                    delta.x = if delta.x == 2 { 1 } else { delta.x };
-                    delta.y = if delta.y == 2 { 1 } else { delta.y };
-                }
-                2 => {
-                    // We are either adjacent (1 each axis), or two away on 1.  So we'll just move
-                    // one closer
-                    delta.x = if delta.x > 1 { 1 } else { 0 };
-                    delta.y = if delta.y > 1 { 1 } else { 0 };
-                }
-                0..=1 => {
-                    // We're adjacent, so there's nothing to do
-                    delta = Vector2i { x: 0, y: 0 };
-                }
-                _ => unreachable!(),
-            }
-
-            // We've figured out the magnitude of the move; now ensure we move the right way by
-            // making the sign of our delta match the difference
-            if dx < 0 {
-                delta.x *= -1
-            }
-            if dy < 0 {
-                delta.y *= -1
-            }
-
-            tpos = tpos + &delta;
+            tpos = get_knot_follow_pos(&hpos, &tpos);
             tail_visited.insert(tpos);
         }
     }
@@ -158,8 +120,29 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(tail_visited.len())
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let instructions = parse_input(input);
+
+    let mut knots = Vec::new();
+    for _ in 0..10 {
+        knots.push(Vector2i { x: 0, y: 0 });
+    }
+
+    let mut tail_visited = HashSet::new();
+    tail_visited.insert(knots[knots.len() - 1]);
+
+    for instr in &instructions {
+        for _ in 0..instr.amount {
+            knots[0] = knots[0] + &instr.direction;
+            for idx in 1..knots.len() {
+                knots[idx] = get_knot_follow_pos(&knots[idx - 1], &knots[idx]);
+            }
+
+            tail_visited.insert(knots[knots.len() - 1]);
+        }
+    }
+
+    Some(tail_visited.len())
 }
 
 fn main() {
@@ -181,6 +164,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 9);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(1));
     }
 }
