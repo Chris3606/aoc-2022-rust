@@ -39,10 +39,10 @@ impl Instruction {
         }
     }
 
-    pub fn execute(&self, cpu: &mut CPU) {
+    pub fn execute(&self, x: i32) -> i32 {
         match self {
-            Self::Addx(v) => cpu.x += v,
-            Self::Noop => {}
+            Self::Addx(v) => x + v,
+            Self::Noop => x,
         }
     }
 }
@@ -60,68 +60,73 @@ impl ExecutingInstruction {
             cycles_remaining: instr.num_cycles(),
         }
     }
-
-    pub fn tick(&mut self, cpu: &mut CPU) -> bool {
-        self.cycles_remaining -= 1;
-
-        if self.cycles_remaining == 0 {
-            self.instr.execute(cpu);
-            return true;
-        }
-
-        false
-    }
 }
 
-struct CPU {
+struct CPU<'a, T>
+where
+    T: Iterator<Item = &'a Instruction>,
+{
     x: i32,
     cycle: u32,
+    instructions: T,
+    current_instruction: ExecutingInstruction,
+    finished_program: bool,
 }
 
-impl CPU {
-    pub fn new() -> Self {
-        Self { x: 1, cycle: 0 }
+impl<'a, T> CPU<'a, T>
+where
+    T: Iterator<Item = &'a Instruction>,
+{
+    pub fn new(mut instructions: T) -> Self {
+        let instr = *instructions.next().unwrap();
+        Self {
+            x: 1,
+            cycle: 0,
+            instructions,
+            current_instruction: ExecutingInstruction::new(instr),
+            finished_program: false,
+        }
     }
 
-    pub fn execute_program(&mut self, program: &Vec<Instruction>) -> i32 {
-        let mut signal_strength = 0;
+    /// Completes a cycle of the CPU, returning the value in x _during_ (not after) the current
+    /// cycle.
+    pub fn tick(&mut self) -> i32 {
+        let x = self.x;
+        self.cycle += 1;
 
-        let mut instr_it = program.iter();
-        let mut current_instr = ExecutingInstruction::new(*instr_it.next().unwrap());
-        loop {
-            // The question asks for the value _during_ the given cycles, not _after_
-            // those cycles complete; so we must check before we complete an instruction
-            // this cycle
-            self.cycle += 1;
-            if self.cycle == 20 || self.cycle > 20 && (self.cycle - 20) % 40 == 0 {
-                signal_strength += self.cycle as i32 * self.x
-            }
+        self.current_instruction.cycles_remaining -= 1;
+        if self.current_instruction.cycles_remaining == 0 {
+            self.x = self.current_instruction.instr.execute(self.x);
 
-            let finished = current_instr.tick(self);
-            if finished {
-                if let Some(next) = instr_it.next() {
-                    current_instr = ExecutingInstruction::new(*next);
-                } else {
-                    break;
-                }
+            if let Some(next) = self.instructions.next() {
+                self.current_instruction = ExecutingInstruction::new(*next);
+            } else {
+                self.finished_program = true;
             }
         }
 
-        signal_strength
+        x
     }
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
     let instructions: Vec<Instruction> = input.lines().map(|l| l.parse().unwrap()).collect();
-    let mut cpu = CPU::new();
-    let signal_strength = cpu.execute_program(&instructions);
+    let mut cpu = CPU::new(instructions.iter());
+
+    let mut signal_strength = 0;
+    while !cpu.finished_program {
+        let x = cpu.tick();
+        if cpu.cycle == 20 || cpu.cycle > 20 && (cpu.cycle - 20) % 40 == 0 {
+            signal_strength += cpu.cycle as i32 * x
+        }
+    }
 
     Some(signal_strength)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
     let instructions: Vec<Instruction> = input.lines().map(|l| l.parse().unwrap()).collect();
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::new(instructions.iter());
 
     let mut grid = Grid::new_empty(40, 6, ' ');
 
