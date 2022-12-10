@@ -13,22 +13,19 @@ pub enum ParseError {
     InvalidInput,
 }
 
-pub static CARDINAL_DIRS: [Vector2i; 4] = [
-    Vector2i { x: 0, y: -1 },
-    Vector2i { x: 1, y: 0 },
-    Vector2i { x: 0, y: 1 },
-    Vector2i { x: -1, y: 0 },
-];
+pub const UP: Vector2i = Vector2i { x: 0, y: -1 };
+pub const UP_RIGHT: Vector2i = Vector2i { x: 1, y: -1 };
+pub const RIGHT: Vector2i = Vector2i { x: 1, y: 0 };
+pub const DOWN_RIGHT: Vector2i = Vector2i { x: 1, y: 1 };
+pub const DOWN: Vector2i = Vector2i { x: 0, y: 1 };
+pub const DOWN_LEFT: Vector2i = Vector2i { x: -1, y: 1 };
+pub const LEFT: Vector2i = Vector2i { x: -1, y: 0 };
+pub const UP_LEFT: Vector2i = Vector2i { x: -1, y: -1 };
+
+pub static CARDINAL_DIRS: [Vector2i; 4] = [UP, RIGHT, DOWN, LEFT];
 
 pub static EIGHTWAY_DIRS: [Vector2i; 8] = [
-    Vector2i { x: 0, y: -1 },
-    Vector2i { x: 1, y: -1 },
-    Vector2i { x: 1, y: 0 },
-    Vector2i { x: 1, y: 1 },
-    Vector2i { x: 0, y: 1 },
-    Vector2i { x: -1, y: 1 },
-    Vector2i { x: -1, y: 0 },
-    Vector2i { x: -1, y: -1 },
+    UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT,
 ];
 
 pub enum AdjacencyRule {
@@ -104,6 +101,13 @@ impl ops::Add<&Vector2i> for Vector2i {
     }
 }
 
+pub fn chebyshev_distance(p1: &Vector2i, p2: &Vector2i) -> u64 {
+    p2.x.abs_diff(p1.x).max(p2.y.abs_diff(p1.y))
+}
+
+pub fn manhattan_distance(p1: &Vector2i, p2: &Vector2i) -> u64 {
+    p2.x.abs_diff(p1.x) + p2.y.abs_diff(p1.y)
+}
 /// Represents a 2-dimensional, integral grid of values.
 ///
 /// It stores the backing values in a vector of the appropriate size, and allows you to access
