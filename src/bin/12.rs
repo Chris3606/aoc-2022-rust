@@ -1,4 +1,4 @@
-use advent_of_code::helpers::{AdjacencyRule, Grid, Vector2i};
+use advent_of_code::helpers::{manhattan_distance, AdjacencyRule, Grid, Vector2i};
 use std::{
     cmp::Ordering,
     collections::{BinaryHeap, HashMap},
@@ -6,52 +6,54 @@ use std::{
 
 // Priority queue element
 #[derive(Copy, Clone, Eq, PartialEq)]
-struct State {
-    cost: u32,
+struct Node {
+    f: u32,
+    g: u32,
     position: usize,
 }
 
 // Ord required for binary heap; ensure we implement such that we get _minimum_ cost
-impl Ord for State {
+impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
         // Ordering flipped, we want a _min_ heap
         // we compare positions on ties, just so that heap PartialOrd is consistent with this.
         other
-            .cost
-            .cmp(&self.cost)
+            .f
+            .cmp(&self.f)
             .then_with(|| self.position.cmp(&other.position))
     }
 }
 
-impl PartialOrd for State {
+impl PartialOrd for Node {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 // Given a grid of costs, and a start and end point, finds the shortest path between them using
-// Dijkstra's, and returns the sum of the costs along that route.
+// A*, and returns the sum of the costs along that route.
 fn shortest_path(grid: &Grid<u8>, start: &Vector2i, end: &Vector2i) -> Option<u32> {
-    let mut dist = HashMap::new();
+    let mut dist = Grid::new(grid.iter().map(|_| u32::MAX).collect(), grid.width());
     let mut heap = BinaryHeap::new();
 
-    dist.insert(*start, 0);
-    heap.push(State {
-        cost: 0,
+    dist[*start] = 0;
+    heap.push(Node {
+        g: 0,
+        f: manhattan_distance(start, end) as u32,
         position: start.to_index(grid.width()),
     });
 
-    while let Some(State { cost, position }) = heap.pop() {
+    while let Some(Node { f: _, g, position }) = heap.pop() {
         let position = Vector2i::new_from_index(position as u64, grid.width() as u64);
 
-        // We only care about paths to end so we'll stop early if we've found our path
+        // We found the shortest path
         if position == *end {
-            return Some(cost);
+            return Some(g);
         }
 
         // IF we've already found a better way, we won't visit this node on the current path;
         // this can happen if multiple states with the same value were pushed into the queue
-        if cost > *dist.get(&position).unwrap_or(&u32::MAX) {
+        if g > dist[position] {
             continue;
         }
 
@@ -62,15 +64,15 @@ fn shortest_path(grid: &Grid<u8>, start: &Vector2i, end: &Vector2i) -> Option<u3
             .filter(|i| grid.contains(i))
             .filter(|i| grid[*i] <= grid[position] + 1)
         {
-            let next_state = State {
-                cost: cost + 1,
+            let next_state = Node {
+                g: g + 1,
+                f: g + 1 + manhattan_distance(&neighbor, end) as u32,
                 position: neighbor.to_index(grid.width()),
             };
 
             // If cost is lower, add it to the list of nodes to visit and update the cost
-            let neighbor_cost = dist.entry(neighbor).or_insert(u32::MAX);
-            if next_state.cost < *neighbor_cost {
-                *neighbor_cost = next_state.cost;
+            if next_state.g < dist[neighbor] {
+                dist[neighbor] = next_state.g;
                 heap.push(next_state);
             }
         }
