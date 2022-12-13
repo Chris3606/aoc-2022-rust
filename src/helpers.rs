@@ -88,6 +88,16 @@ impl Vector2i {
     pub fn to_index(&self, width: usize) -> usize {
         (self.y as usize) * width + (self.x as usize)
     }
+
+    pub fn neighbors(self, adjacency_rule: AdjacencyRule) -> NeighborIterator {
+        NeighborIterator {
+            point: self,
+            iter: match adjacency_rule {
+                AdjacencyRule::Cardinals => CARDINAL_DIRS.iter(),
+                AdjacencyRule::EightWay => EIGHTWAY_DIRS.iter(),
+            },
+        }
+    }
 }
 
 impl ops::Add<&Vector2i> for Vector2i {
@@ -98,6 +108,23 @@ impl ops::Add<&Vector2i> for Vector2i {
         Vector2i {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+        }
+    }
+}
+
+pub struct NeighborIterator {
+    point: Vector2i,
+    iter: core::slice::Iter<'static, Vector2i>,
+}
+
+impl Iterator for NeighborIterator {
+    type Item = Vector2i;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(p) = self.iter.next() {
+            Some(self.point + p)
+        } else {
+            None
         }
     }
 }
@@ -193,6 +220,10 @@ impl<T> Grid<T> {
             && pos.y >= 0
             && (pos.x as usize) < self.width()
             && (pos.y as usize) < self.height()
+    }
+
+    pub fn positions(&self) -> impl Iterator<Item = Vector2i> + '_ {
+        (0..self.values.len()).map(|i| Vector2i::new_from_index(i as u64, self.width() as u64))
     }
 }
 
