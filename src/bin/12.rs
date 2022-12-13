@@ -1,8 +1,5 @@
 use advent_of_code::helpers::{manhattan_distance, AdjacencyRule, Grid, Vector2i};
-use std::{
-    cmp::Ordering,
-    collections::{BinaryHeap, HashMap},
-};
+use std::{cmp::Ordering, collections::BinaryHeap};
 
 // Priority queue element
 #[derive(Copy, Clone, Eq, PartialEq)]
