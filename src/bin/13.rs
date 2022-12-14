@@ -110,19 +110,11 @@ impl FromStr for Pair {
 
 impl Pair {
     pub fn is_right_order(&self) -> bool {
-        for (e1, e2) in self.p1.elements.iter().zip(&self.p2.elements) {
-            let compare = compare_elements(e1, e2);
-            match compare {
-                Ordering::Less => return true,
-                Ordering::Greater => return false,
-                Ordering::Equal => {}
-            }
+        match compare_lists(&self.p1.elements, &self.p2.elements) {
+            Ordering::Less => true,
+            Ordering::Greater => false,
+            Ordering::Equal => panic!("Tie can't happen in pairs."),
         }
-
-        if self.p1.elements.len() == self.p2.elements.len() {
-            panic!("Tie")
-        }
-        return self.p1.elements.len() < self.p2.elements.len();
     }
 }
 
@@ -142,8 +134,31 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(sum)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let mut packets: Vec<_> = input
+        .lines()
+        .filter(|&i| i != "")
+        .map(|l| l.parse::<Packet>().unwrap().elements)
+        .collect();
+
+    let divider1 = vec![Element::List(vec![Element::Integer(2)])];
+    let divider2 = vec![Element::List(vec![Element::Integer(6)])];
+    packets.push(divider1.clone());
+    packets.push(divider2.clone());
+
+    packets.sort_by(compare_lists);
+
+    let s1_idx = packets
+        .iter()
+        .position(|i| compare_lists(&divider1, i) == Ordering::Equal)
+        .unwrap();
+
+    let s2_idx = packets
+        .iter()
+        .position(|i| compare_lists(&divider2, i) == Ordering::Equal)
+        .unwrap();
+
+    Some((s1_idx + 1) * (s2_idx + 1))
 }
 
 fn main() {
@@ -165,6 +180,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 13);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(140));
     }
 }
