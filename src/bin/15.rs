@@ -1,12 +1,17 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 use advent_of_code::helpers::{manhattan_distance, ParseError, Vector2i};
 
 #[derive(Debug)]
 struct MapData {
-    sensors: Vec<Vector2i>,
-    beacons: Vec<Vector2i>,
-    dists: HashMap<Vector2i, u64>,
+    /// Beacons detected
+    beacons: HashSet<Vector2i>,
+    /// Mapping of each sensor position to the manhattan distance between it and the beacon
+    /// it detects.
+    sensor_dists: HashMap<Vector2i, u64>,
 }
 
 impl FromStr for MapData {
@@ -14,9 +19,8 @@ impl FromStr for MapData {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut data = Self {
-            sensors: Vec::new(),
-            beacons: Vec::new(),
-            dists: HashMap::new(),
+            beacons: HashSet::new(),
+            sensor_dists: HashMap::new(),
         };
 
         for line in s.lines() {
@@ -33,7 +37,6 @@ impl FromStr for MapData {
                 .map_err(|_| ParseError::InvalidInput)?;
 
             let sensor = Vector2i { x, y };
-            data.sensors.push(sensor);
 
             let mut xy_it = beacon_data.split(", ");
             let x = (&(xy_it.next().ok_or(ParseError::InvalidInput)?))
@@ -45,9 +48,9 @@ impl FromStr for MapData {
                 .map_err(|_| ParseError::InvalidInput)?;
 
             let beacon = Vector2i { x, y };
-            data.beacons.push(beacon);
+            data.beacons.insert(beacon);
 
-            data.dists
+            data.sensor_dists
                 .insert(sensor, manhattan_distance(&sensor, &beacon));
         }
 
@@ -61,14 +64,14 @@ pub fn part_one(input: &str) -> Option<u32> {
     let data = input.parse::<MapData>().unwrap();
 
     let x_min = data
-        .dists
+        .sensor_dists
         .iter()
         .map(|(pos, &dist)| pos.x - dist as i64)
         .min()
         .unwrap();
 
     let x_max = data
-        .dists
+        .sensor_dists
         .iter()
         .map(|(pos, &dist)| pos.x + dist as i64)
         .max()
@@ -81,7 +84,7 @@ pub fn part_one(input: &str) -> Option<u32> {
             continue;
         }
 
-        for (sensor, &dist) in &data.dists {
+        for (sensor, &dist) in &data.sensor_dists {
             if manhattan_distance(sensor, &pos) <= dist {
                 num_pos += 1;
                 break;
