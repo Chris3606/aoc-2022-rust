@@ -1,7 +1,8 @@
 use std::{collections::HashMap, str::FromStr};
 
-use advent_of_code::helpers::{ParseError, Vector2i};
+use advent_of_code::helpers::{manhattan_distance, ParseError, Vector2i};
 
+#[derive(Debug)]
 struct MapData {
     sensors: Vec<Vector2i>,
     beacons: Vec<Vector2i>,
@@ -11,11 +12,84 @@ struct MapData {
 impl FromStr for MapData {
     type Err = ParseError;
 
-    pub fn from_str(s: &str) -> Result<Self, Self::Err> {}
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut data = Self {
+            sensors: Vec::new(),
+            beacons: Vec::new(),
+            dists: HashMap::new(),
+        };
+
+        for line in s.lines() {
+            let mut parts_it = line.split(": ");
+            let sensor_data = parts_it.next().ok_or(ParseError::InvalidInput)?;
+            let beacon_data = parts_it.next().ok_or(ParseError::InvalidInput)?;
+
+            let mut xy_it = sensor_data.split(", ");
+            let x = (&(xy_it.next().ok_or(ParseError::InvalidInput)?))["Sensor at x=".len()..]
+                .parse::<i64>()
+                .map_err(|_| ParseError::InvalidInput)?;
+            let y = (&(xy_it.next().ok_or(ParseError::InvalidInput)?))["y=".len()..]
+                .parse::<i64>()
+                .map_err(|_| ParseError::InvalidInput)?;
+
+            let sensor = Vector2i { x, y };
+            data.sensors.push(sensor);
+
+            let mut xy_it = beacon_data.split(", ");
+            let x = (&(xy_it.next().ok_or(ParseError::InvalidInput)?))
+                ["closest beacon is at x=".len()..]
+                .parse::<i64>()
+                .map_err(|_| ParseError::InvalidInput)?;
+            let y = (&(xy_it.next().ok_or(ParseError::InvalidInput)?))["y=".len()..]
+                .parse::<i64>()
+                .map_err(|_| ParseError::InvalidInput)?;
+
+            let beacon = Vector2i { x, y };
+            data.beacons.push(beacon);
+
+            data.dists
+                .insert(sensor, manhattan_distance(&sensor, &beacon));
+        }
+
+        Ok(data)
+    }
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    None
+    const Y_VAL: i64 = 2000000;
+
+    let data = input.parse::<MapData>().unwrap();
+
+    let x_min = data
+        .dists
+        .iter()
+        .map(|(pos, &dist)| pos.x - dist as i64)
+        .min()
+        .unwrap();
+
+    let x_max = data
+        .dists
+        .iter()
+        .map(|(pos, &dist)| pos.x + dist as i64)
+        .max()
+        .unwrap();
+
+    let mut num_pos = 0;
+    for x in x_min..=x_max {
+        let pos = Vector2i { x, y: Y_VAL };
+        if data.beacons.contains(&pos) {
+            continue;
+        }
+
+        for (sensor, &dist) in &data.dists {
+            if manhattan_distance(sensor, &pos) <= dist {
+                num_pos += 1;
+                break;
+            }
+        }
+    }
+
+    Some(num_pos)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
@@ -35,7 +109,7 @@ mod tests {
     #[test]
     fn test_part_one() {
         let input = advent_of_code::read_file("examples", 15);
-        assert_eq!(part_one(&input), None);
+        assert_eq!(part_one(&input), Some(26));
     }
 
     #[test]
