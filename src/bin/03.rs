@@ -59,8 +59,8 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     // Step by last index to avoid over-reaching the end of the array
     let mut sum = 0;
-    for i in (2..rucksacks.len()).step_by(3) {
-        let (i1, i2, i3) = (&rucksacks[i - 2], &rucksacks[i - 1], &rucksacks[i]);
+    for sacks in rucksacks.chunks(3) {
+        let (i1, i2, i3) = (&sacks[0], &sacks[1], &sacks[2]);
 
         let mut item = None;
         for c in &i1.items {

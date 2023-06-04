@@ -11,7 +11,7 @@ enum Choice {
 }
 
 impl Choice {
-    /// Returns what choice this one will lose to.
+    /// Returns what choice this one wins against.
     pub fn beats(&self) -> Choice {
         match self {
             Choice::Rock => Choice::Scissors,
@@ -20,7 +20,7 @@ impl Choice {
         }
     }
 
-    /// Returns what choice this one wins against.
+    /// Returns what choice this one will lose to.
     pub fn beat_by(&self) -> Choice {
         match self {
             Choice::Rock => Choice::Paper,
