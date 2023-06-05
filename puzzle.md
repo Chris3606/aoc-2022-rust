@@ -1,85 +1,150 @@
-\--- Day 3: Rucksack Reorganization ---
+\--- Day 5: Supply Stacks ---
 ----------
 
-One Elf has the important job of loading all of the [rucksacks](https://en.wikipedia.org/wiki/Rucksack) with supplies for the jungle journey. Unfortunately, that Elf didn't quite follow the packing instructions, and so a few items now need to be rearranged.
+The expedition can depart as soon as the final supplies have been unloaded from the ships. Supplies are stored in stacks of marked *crates*, but because the needed supplies are buried under many other crates, the crates need to be rearranged.
 
-Each rucksack has two large *compartments*. All items of a given type are meant to go into exactly one of the two compartments. The Elf that did the packing failed to follow this rule for exactly one item type per rucksack.
+The ship has a *giant cargo crane* capable of moving crates between stacks. To ensure none of the crates get crushed or fall over, the crane operator will rearrange them in a series of carefully-planned steps. After the crates are rearranged, the desired crates will be at the top of each stack.
 
-The Elves have made a list of all of the items currently in each rucksack (your puzzle input), but they need your help finding the errors. Every item type is identified by a single lowercase or uppercase letter (that is, `a` and `A` refer to different types of items).
+The Elves don't want to interrupt the crane operator during this delicate procedure, but they forgot to ask her *which* crate will end up where, and they want to be ready to unload them as soon as possible so they can embark.
 
-The list of items for each rucksack is given as characters all on a single line. A given rucksack always has the same number of items in each of its two compartments, so the first half of the characters represent items in the first compartment, while the second half of the characters represent items in the second compartment.
-
-For example, suppose you have the following list of contents from six rucksacks:
+They do, however, have a drawing of the starting stacks of crates *and* the rearrangement procedure (your puzzle input). For example:
 
 ```
-vJrwpWtwJgWrhcsFMMfFFhFp
-jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
-PmmdzqPrVvPwwTWBwg
-wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
-ttgJtRGJQctTZtZT
-CrZsJsPPZsGzwwsLwLmpwMDw
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3
+
+move 1 from 2 to 1
+move 3 from 1 to 3
+move 2 from 2 to 1
+move 1 from 1 to 2
 
 ```
 
-* The first rucksack contains the items `vJrwpWtwJgWrhcsFMMfFFhFp`, which means its first compartment contains the items `vJrwpWtwJgWr`, while the second compartment contains the items `hcsFMMfFFhFp`. The only item type that appears in both compartments is lowercase `*p*`.
-* The second rucksack's compartments contain `jqHRNqRjqzjGDLGL` and `rsFMfFZSrLrFZsSL`. The only item type that appears in both compartments is uppercase `*L*`.
-* The third rucksack's compartments contain `PmmdzqPrV` and `vPwwTWBwg`; the only common item type is uppercase `*P*`.
-* The fourth rucksack's compartments only share item type `*v*`.
-* The fifth rucksack's compartments only share item type `*t*`.
-* The sixth rucksack's compartments only share item type `*s*`.
+In this example, there are three stacks of crates. Stack 1 contains two crates: crate `Z` is on the bottom, and crate `N` is on top. Stack 2 contains three crates; from bottom to top, they are crates `M`, `C`, and `D`. Finally, stack 3 contains a single crate, `P`.
 
-To help prioritize item rearrangement, every item type can be converted to a *priority*:
+Then, the rearrangement procedure is given. In each step of the procedure, a quantity of crates is moved from one stack to a different stack. In the first step of the above rearrangement procedure, one crate is moved from stack 2 to stack 1, resulting in this configuration:
 
-* Lowercase item types `a` through `z` have priorities 1 through 26.
-* Uppercase item types `A` through `Z` have priorities 27 through 52.
+```
+[D]        
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3
 
-In the above example, the priority of the item type that appears in both compartments of each rucksack is 16 (`p`), 38 (`L`), 42 (`P`), 22 (`v`), 20 (`t`), and 19 (`s`); the sum of these is `*157*`.
+```
 
-Find the item type that appears in both compartments of each rucksack. *What is the sum of the priorities of those item types?*
+In the second step, three crates are moved from stack 1 to stack 3. Crates are moved *one at a time*, so the first crate to be moved (`D`) ends up below the second and third crates:
 
-Your puzzle answer was `7848`.
+```
+        [Z]
+        [N]
+    [C] [D]
+    [M] [P]
+ 1   2   3
+
+```
+
+Then, both crates are moved from stack 2 to stack 1. Again, because crates are moved *one at a time*, crate `C` ends up below crate `M`:
+
+```
+        [Z]
+        [N]
+[M]     [D]
+[C]     [P]
+ 1   2   3
+
+```
+
+Finally, one crate is moved from stack 1 to stack 2:
+
+```
+        [Z]
+        [N]
+        [D]
+[C] [M] [P]
+ 1   2   3
+
+```
+
+The Elves just need to know *which crate will end up on top of each stack*; in this example, the top crates are `C` in stack 1, `M` in stack 2, and `Z` in stack 3, so you should combine these together and give the Elves the message `*CMZ*`.
+
+*After the rearrangement procedure completes, what crate ends up on top of each stack?*
+
+Your puzzle answer was `WHTLRMZRC`.
 
 \--- Part Two ---
 ----------
 
-As you finish identifying the misplaced items, the Elves come to you with another issue.
+As you watch the crane operator expertly rearrange the crates, you notice the process isn't following your prediction.
 
-For safety, the Elves are divided into groups of three. Every Elf carries a badge that identifies their group. For efficiency, within each group of three Elves, the badge is the *only item type carried by all three Elves*. That is, if a group's badge is item type `B`, then all three Elves will have item type `B` somewhere in their rucksack, and at most two of the Elves will be carrying any other item type.
+Some mud was covering the writing on the side of the crane, and you quickly wipe it away. The crane isn't a CrateMover 9000 - it's a *CrateMover 9001*.
 
-The problem is that someone forgot to put this year's updated authenticity sticker on the badges. All of the badges need to be pulled out of the rucksacks so the new authenticity stickers can be attached.
+The CrateMover 9001 is notable for many new and exciting features: air conditioning, leather seats, an extra cup holder, and *the ability to pick up and move multiple crates at once*.
 
-Additionally, nobody wrote down which item type corresponds to each group's badges. The only way to tell which item type is the right one is by finding the one item type that is *common between all three Elves* in each group.
-
-Every set of three lines in your list corresponds to a single group, but each group can have a different badge item type. So, in the above example, the first group's rucksacks are the first three lines:
+Again considering the example above, the crates begin in the same configuration:
 
 ```
-vJrwpWtwJgWrhcsFMMfFFhFp
-jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
-PmmdzqPrVvPwwTWBwg
-
-```
-
-And the second group's rucksacks are the next three lines:
-
-```
-wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
-ttgJtRGJQctTZtZT
-CrZsJsPPZsGzwwsLwLmpwMDw
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3
 
 ```
 
-In the first group, the only item type that appears in all three rucksacks is lowercase `r`; this must be their badges. In the second group, their badge item type must be `Z`.
+Moving a single crate from stack 2 to stack 1 behaves the same as before:
 
-Priorities for these items must still be found to organize the sticker attachment efforts: here, they are 18 (`r`) for the first group and 52 (`Z`) for the second group. The sum of these is `*70*`.
+```
+[D]        
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3
 
-Find the item type that corresponds to the badges of each three-Elf group. *What is the sum of the priorities of those item types?*
+```
 
-Your puzzle answer was `2616`.
+However, the action of moving three crates from stack 1 to stack 3 means that those three moved crates *stay in the same order*, resulting in this new configuration:
+
+```
+        [D]
+        [N]
+    [C] [Z]
+    [M] [P]
+ 1   2   3
+
+```
+
+Next, as both crates are moved from stack 2 to stack 1, they *retain their order* as well:
+
+```
+        [D]
+        [N]
+[C]     [Z]
+[M]     [P]
+ 1   2   3
+
+```
+
+Finally, a single crate is still moved from stack 1 to stack 2, but now it's crate `C` that gets moved:
+
+```
+        [D]
+        [N]
+        [Z]
+[M] [C] [P]
+ 1   2   3
+
+```
+
+In this example, the CrateMover 9001 has put the crates in a totally different order: `*MCD*`.
+
+Before the rearrangement process finishes, update your simulation so that the Elves know where they should stand to be ready to unload the final supplies. *After the rearrangement procedure completes, what crate ends up on top of each stack?*
+
+Your puzzle answer was `GMPMLWNMG`.
 
 Both parts of this puzzle are complete! They provide two gold stars: \*\*
 
 At this point, you should [return to your Advent calendar](/2022) and try another puzzle.
 
-If you still want to see it, you can [get your puzzle input](3/input).
+If you still want to see it, you can [get your puzzle input](5/input).
 
-You can also [Shareon [Twitter](https://twitter.com/intent/tweet?text=I%27ve+completed+%22Rucksack+Reorganization%22+%2D+Day+3+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F3&related=ericwastl&hashtags=AdventOfCode) [Mastodon](javascript:void(0);)] this puzzle.
+You can also [Shareon [Twitter](https://twitter.com/intent/tweet?text=I%27ve+completed+%22Supply+Stacks%22+%2D+Day+5+%2D+Advent+of+Code+2022&url=https%3A%2F%2Fadventofcode%2Ecom%2F2022%2Fday%2F5&related=ericwastl&hashtags=AdventOfCode) [Mastodon](javascript:void(0);)] this puzzle.

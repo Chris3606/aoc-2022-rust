@@ -1,3 +1,4 @@
+use nom::{bytes::complete::tag, character::complete::newline, multi::separated_list1, IResult};
 use std::str::FromStr;
 
 use advent_of_code::helpers::ParseError;
@@ -77,34 +78,24 @@ struct Instruction {
     to: usize,
 }
 
-impl FromStr for Instruction {
-    type Err = ParseError;
+fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
+    let (input, _) = tag("move ")(input)?;
+    let (input, num) = nom::character::complete::u32(input)?;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut it = s.split(' ');
-        _ = it.next().ok_or(ParseError::InvalidInput)?;
-        let num = it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<usize>()
-            .map_err(|_| ParseError::InvalidInput)?;
+    let (input, _) = tag(" from ")(input)?;
+    let (input, from) = nom::character::complete::u32(input)?;
 
-        _ = it.next().ok_or(ParseError::InvalidInput)?;
-        let from = it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<usize>()
-            .map_err(|_| ParseError::InvalidInput)?;
+    let (input, _) = tag(" to ")(input)?;
+    let (input, to) = nom::character::complete::u32(input)?;
 
-        _ = it.next().ok_or(ParseError::InvalidInput)?;
-        let to = it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<usize>()
-            .map_err(|_| ParseError::InvalidInput)?;
-
-        Ok(Self { num, from, to })
-    }
+    Ok((
+        input,
+        Instruction {
+            num: num as usize,
+            from: from as usize,
+            to: to as usize,
+        },
+    ))
 }
 
 pub fn part_one(input: &str) -> Option<String> {
@@ -112,12 +103,8 @@ pub fn part_one(input: &str) -> Option<String> {
     let stack_data = parts_it.next().unwrap();
 
     let mut stacks = stack_data.parse::<Stacks>().unwrap();
-    let instructions: Vec<Instruction> = parts_it
-        .next()
-        .unwrap()
-        .lines()
-        .map(|l| l.parse().unwrap())
-        .collect();
+    let (_, instructions) =
+        separated_list1(newline, parse_instruction)(parts_it.next().unwrap()).unwrap();
 
     for i in &instructions {
         stacks.execute_9000(i);
@@ -132,12 +119,8 @@ pub fn part_two(input: &str) -> Option<String> {
     let stack_data = parts_it.next().unwrap();
 
     let mut stacks = stack_data.parse::<Stacks>().unwrap();
-    let instructions: Vec<Instruction> = parts_it
-        .next()
-        .unwrap()
-        .lines()
-        .map(|l| l.parse().unwrap())
-        .collect();
+    let (_, instructions) =
+        separated_list1(newline, parse_instruction)(parts_it.next().unwrap()).unwrap();
 
     for i in &instructions {
         stacks.execute_9001(i);

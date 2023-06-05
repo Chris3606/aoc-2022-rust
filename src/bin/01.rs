@@ -1,26 +1,27 @@
+use nom::{bytes::complete::tag, character::complete::newline, multi::separated_list1, IResult};
+
 type ElfInventory = Vec<u32>;
 
-pub fn parse_input(input: &str) -> Vec<ElfInventory> {
-    input
-        .split("\n\n")
-        .map(|inv_data| {
-            inv_data
-                .lines()
-                .map(|l| l.parse::<u32>().unwrap())
-                .collect()
-        })
-        .collect()
+fn parse_inventory(input: &str) -> IResult<&str, ElfInventory> {
+    let (input, inventory) = separated_list1(newline, nom::character::complete::u32)(input)?;
+    Ok((input, inventory))
+}
+
+fn parse_input(input: &str) -> IResult<&str, Vec<ElfInventory>> {
+    let (input, elf_inventories) = separated_list1(tag("\n\n"), parse_inventory)(input)?;
+
+    Ok((input, elf_inventories))
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let elfs = parse_input(input);
+    let (_, elfs) = parse_input(input).unwrap();
     let most_calories = elfs.iter().map(|i| i.iter().sum()).max().unwrap();
 
     Some(most_calories)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let elfs = parse_input(input);
+    let (_, elfs) = parse_input(input).unwrap();
     let mut calories: Vec<_> = elfs.iter().map(|i| i.iter().sum()).collect();
     calories.sort();
 

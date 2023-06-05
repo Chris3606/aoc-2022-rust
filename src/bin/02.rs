@@ -1,5 +1,6 @@
-use advent_of_code::helpers::ParseError;
-use std::str::FromStr;
+use nom::{
+    character::complete::newline, multi::separated_list1, sequence::separated_pair, IResult,
+};
 
 /// Represents a choice made by either a player or their opponent during a round of
 /// rock-paper-scissors.
@@ -37,6 +38,25 @@ struct Round {
     opponents: Choice,
 }
 
+fn parse_move(input: &str) -> IResult<&str, Choice> {
+    let (input, mv) = nom::character::complete::one_of("ABCXYZ")(input)?;
+    let mv = match mv {
+        'A' | 'X' => Choice::Rock,
+        'B' | 'Y' => Choice::Paper,
+        'C' | 'Z' => Choice::Scissors,
+        _ => unreachable!(),
+    };
+
+    Ok((input, mv))
+}
+
+fn parse_round(input: &str) -> IResult<&str, Round> {
+    let (input, (opponents, yours)) =
+        separated_pair(parse_move, nom::character::complete::space1, parse_move)(input)?;
+
+    Ok((input, Round { yours, opponents }))
+}
+
 /// Represents the result of a given rock-paper-scissors round.
 enum RoundResult {
     Win,
@@ -44,27 +64,16 @@ enum RoundResult {
     Draw,
 }
 
-impl FromStr for Round {
-    type Err = ParseError;
+fn parse_round_result(input: &str) -> IResult<&str, RoundResult> {
+    let (input, result) = nom::character::complete::one_of("XYZ")(input)?;
+    let result = match result {
+        'X' => RoundResult::Loss,
+        'Y' => RoundResult::Draw,
+        'Z' => RoundResult::Win,
+        _ => unreachable!(),
+    };
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut parts_it = s.split(" ");
-        let opponents = match parts_it.next().ok_or(ParseError::InvalidInput)? {
-            "A" => Choice::Rock,
-            "B" => Choice::Paper,
-            "C" => Choice::Scissors,
-            _ => return Err(ParseError::InvalidInput),
-        };
-
-        let yours = match parts_it.next().ok_or(ParseError::InvalidInput)? {
-            "X" => Choice::Rock,
-            "Y" => Choice::Paper,
-            "Z" => Choice::Scissors,
-            _ => return Err(ParseError::InvalidInput),
-        };
-
-        Ok(Round { yours, opponents })
-    }
+    Ok((input, result))
 }
 
 impl Round {
@@ -104,30 +113,20 @@ struct StrategyGuideData {
     required_result: RoundResult,
 }
 
-impl FromStr for StrategyGuideData {
-    type Err = ParseError;
+fn parse_strategy_entry(input: &str) -> IResult<&str, StrategyGuideData> {
+    let (input, (opponents_move, required_result)) = separated_pair(
+        parse_move,
+        nom::character::complete::space1,
+        parse_round_result,
+    )(input)?;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut parts_it = s.split(" ");
-        let opponents_move = match parts_it.next().ok_or(ParseError::InvalidInput)? {
-            "A" => Choice::Rock,
-            "B" => Choice::Paper,
-            "C" => Choice::Scissors,
-            _ => return Err(ParseError::InvalidInput),
-        };
-
-        let required_result = match parts_it.next().ok_or(ParseError::InvalidInput)? {
-            "X" => RoundResult::Loss,
-            "Y" => RoundResult::Draw,
-            "Z" => RoundResult::Win,
-            _ => return Err(ParseError::InvalidInput),
-        };
-
-        Ok(StrategyGuideData {
+    Ok((
+        input,
+        StrategyGuideData {
             opponents_move,
             required_result,
-        })
-    }
+        },
+    ))
 }
 
 impl StrategyGuideData {
@@ -146,20 +145,27 @@ impl StrategyGuideData {
     }
 }
 
+fn parse_rounds(input: &str) -> IResult<&str, Vec<Round>> {
+    let (input, rounds) = separated_list1(newline, parse_round)(input)?;
+    Ok((input, rounds))
+}
+
+fn parse_strategy_guide(input: &str) -> IResult<&str, Vec<StrategyGuideData>> {
+    let (input, rounds) = separated_list1(newline, parse_strategy_entry)(input)?;
+    Ok((input, rounds))
+}
+
 pub fn part_one(input: &str) -> Option<u32> {
-    let score = input
-        .lines()
-        .map(|l| l.parse::<Round>().unwrap())
-        .map(|m| m.get_score())
-        .sum();
+    let (_, rounds) = parse_rounds(input).unwrap();
+    let score = rounds.iter().map(|m| m.get_score()).sum();
 
     Some(score)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let score = input
-        .lines()
-        .map(|l| l.parse::<StrategyGuideData>().unwrap())
+    let (_, strategy_guide) = parse_strategy_guide(input).unwrap();
+    let score = strategy_guide
+        .iter()
         .map(|d| d.get_correct_move())
         .map(|m| m.get_score())
         .sum();
@@ -180,7 +186,7 @@ mod tests {
     #[test]
     fn test_part_one() {
         let input = advent_of_code::read_file("examples", 2);
-        assert_eq!(part_one(&input), Some(15));
+        assert_eq!(part_one(&input), Some(153));
     }
 
     #[test]

@@ -1,6 +1,9 @@
-use std::{collections::HashSet, str::FromStr};
-
-use advent_of_code::helpers::ParseError;
+use nom::{
+    character::complete::{alpha1, newline},
+    multi::separated_list1,
+    IResult,
+};
+use std::collections::HashSet;
 
 struct Rucksack {
     compartment1: HashSet<char>,
@@ -8,24 +11,26 @@ struct Rucksack {
     items: HashSet<char>,
 }
 
-impl FromStr for Rucksack {
-    type Err = ParseError;
+fn parse_rucksack(input: &str) -> IResult<&str, Rucksack> {
+    let (input, line) = alpha1(input)?;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() % 2 != 0 {
-            return Err(ParseError::InvalidInput);
-        }
-        let half = s.len() / 2;
+    let half = line.len() / 2;
 
-        let c1 = &s[0..half];
-        let c2 = &s[half..];
+    let c1 = &line[0..half];
+    let c2 = &line[half..];
 
-        Ok(Rucksack {
-            compartment1: c1.chars().collect(),
-            compartment2: c2.chars().collect(),
-            items: s.chars().collect(),
-        })
-    }
+    let rucksack = Rucksack {
+        compartment1: c1.chars().collect(),
+        compartment2: c2.chars().collect(),
+        items: line.chars().collect(),
+    };
+
+    Ok((input, rucksack))
+}
+
+fn parse_rucksacks(input: &str) -> IResult<&str, Vec<Rucksack>> {
+    let (input, rounds) = separated_list1(newline, parse_rucksack)(input)?;
+    Ok((input, rounds))
 }
 
 fn score_item(item: char) -> u32 {
@@ -37,10 +42,7 @@ fn score_item(item: char) -> u32 {
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let rucksacks: Vec<_> = input
-        .lines()
-        .map(|l| l.parse::<Rucksack>().unwrap())
-        .collect();
+    let (_, rucksacks) = parse_rucksacks(input).unwrap();
 
     let score = rucksacks
         .iter()
@@ -52,10 +54,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let rucksacks: Vec<_> = input
-        .lines()
-        .map(|l| l.parse::<Rucksack>().unwrap())
-        .collect();
+    let (_, rucksacks) = parse_rucksacks(input).unwrap();
 
     let mut sum = 0;
     for sacks in rucksacks.chunks(3) {

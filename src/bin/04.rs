@@ -1,6 +1,7 @@
-use std::str::FromStr;
-
-use advent_of_code::helpers::ParseError;
+use nom::{
+    bytes::complete::tag, character::complete::newline, multi::separated_list1,
+    sequence::separated_pair, IResult,
+};
 
 /// Represents a number range with a min and a max value.
 struct NumRange {
@@ -8,25 +9,15 @@ struct NumRange {
     max: u32,
 }
 
-impl FromStr for NumRange {
-    type Err = ParseError;
+/// Parses a number range in the format {min}-{max}
+fn parse_range(input: &str) -> IResult<&str, NumRange> {
+    let (input, (min, max)) = separated_pair(
+        nom::character::complete::u32,
+        tag("-"),
+        nom::character::complete::u32,
+    )(input)?;
 
-    /// Parses a number range in the format {min}-{max}
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut num_it = s.split('-');
-        let min = num_it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<u32>()
-            .map_err(|_| ParseError::InvalidInput)?;
-        let max = num_it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<u32>()
-            .map_err(|_| ParseError::InvalidInput)?;
-
-        Ok(NumRange { min, max })
-    }
+    Ok((input, NumRange { min, max }))
 }
 
 impl NumRange {
@@ -47,34 +38,24 @@ struct RangePair {
     elf2_range: NumRange,
 }
 
-impl FromStr for RangePair {
-    type Err = ParseError;
+/// Parses a RangePair in the form {NumRange from_str format},{NumRange from_str format}
+fn parse_range_pair(input: &str) -> IResult<&str, RangePair> {
+    let (input, (elf1_range, elf2_range)) =
+        separated_pair(parse_range, tag(","), parse_range)(input)?;
 
-    /// Parses a RangePair in the form {NumRange from_str format},{NumRange from_str format}
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut num_it = s.split(',');
-        let elf1_range = num_it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<NumRange>()
-            .map_err(|_| ParseError::InvalidInput)?;
-        let elf2_range = num_it
-            .next()
-            .ok_or(ParseError::InvalidInput)?
-            .parse::<NumRange>()
-            .map_err(|_| ParseError::InvalidInput)?;
-
-        Ok(RangePair {
+    Ok((
+        input,
+        RangePair {
             elf1_range,
             elf2_range,
-        })
-    }
+        },
+    ))
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
-    let fully_overlapping_ranges = input
-        .lines()
-        .map(|l| l.parse::<RangePair>().unwrap())
+    let (_, ranges) = separated_list1(newline, parse_range_pair)(input).unwrap();
+    let fully_overlapping_ranges = ranges
+        .iter()
         .filter(|p| p.elf1_range.contains(&p.elf2_range) || p.elf2_range.contains(&p.elf1_range))
         .count();
 
@@ -82,9 +63,9 @@ pub fn part_one(input: &str) -> Option<usize> {
 }
 
 pub fn part_two(input: &str) -> Option<usize> {
-    let overlapping_ranges = input
-        .lines()
-        .map(|l| l.parse::<RangePair>().unwrap())
+    let (_, ranges) = separated_list1(newline, parse_range_pair)(input).unwrap();
+    let overlapping_ranges = ranges
+        .iter()
         .filter(|p| p.elf1_range.overlaps(&p.elf2_range))
         .count();
 
