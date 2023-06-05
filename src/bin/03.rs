@@ -57,7 +57,6 @@ pub fn part_two(input: &str) -> Option<u32> {
         .map(|l| l.parse::<Rucksack>().unwrap())
         .collect();
 
-    // Step by last index to avoid over-reaching the end of the array
     let mut sum = 0;
     for sacks in rucksacks.chunks(3) {
         let (i1, i2, i3) = (&sacks[0], &sacks[1], &sacks[2]);
